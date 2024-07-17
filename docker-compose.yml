@@ -1,10 +1,11 @@
 services:
-    laravel.test:
+    api:
         build:
             context: ./docker/8.3
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
+        container_name: app
         image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
@@ -20,36 +21,90 @@ services:
         volumes:
             - '.:/var/www/html'
         networks:
-            - sail
+            - network
         depends_on:
-            - mysql
-    mysql:
-        image: 'mysql/mysql-server:8.0'
+            - db-primary
+            - db-secondary-1
+            - db-secondary-2
+
+    db-primary:
+        image: mongo:7.0
+        container_name: db-primary
+        command:
+            [
+                "--replSet",
+                "cluester-replica",
+                "--bind_ip_all",
+                "--port",
+                "27017"
+            ]
         ports:
-            - '${FORWARD_DB_PORT:-3306}:3306'
-        environment:
-            MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ROOT_HOST: '%'
-            MYSQL_DATABASE: '${DB_DATABASE}'
-            MYSQL_USER: '${DB_USERNAME}'
-            MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 1
-        volumes:
-            - 'sail-mysql:/var/lib/mysql'
-            - './docker/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-        networks:
-            - sail
+            - 27017:27017
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         healthcheck:
-            test:
-                - CMD
-                - mysqladmin
-                - ping
-                - '-p${DB_PASSWORD}'
-            retries: 3
-            timeout: 5s
+            test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'cluester-replica',members:[{_id:0,host:'db-primary:27017',priority:1},{_id:1,host:'db-secondary-1:27017',priority:0.5},{_id:2,host:'db-secondary-2:27017',priority:0.5}]}) }" | mongosh --port 27017 --quiet
+            interval: 5s
+            timeout: 30s
+            start_period: 0s
+            start_interval: 1s
+            retries: 30
+        volumes:
+            - "db-primary-data:/data/db"
+            - "db-primary-config:/data/configdb"
+        networks:
+            - network
+
+    db-secondary-1:
+        image: mongo:7.0
+        container_name: db-secondary-1
+        command:
+            [
+                "--replSet",
+                "cluester-replica",
+                "--bind_ip_all",
+                "--port",
+                "27017"
+            ]
+        ports:
+            - 27018:27017
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - "db-secondary-1-data:/data/db"
+            - "db-secondary-1-config:/data/configdb"
+        networks:
+            - network
+
+    db-secondary-2:
+        image: mongo:7.0
+        container_name: db-secondary-2
+        command:
+            [
+                "--replSet",
+                "cluester-replica",
+                "--bind_ip_all",
+                "--port",
+                "27017"
+            ]
+        ports:
+            - 27019:27017
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        volumes:
+            - "db-secondary-2-data:/data/db"
+            - "db-secondary-2-config:/data/configdb"
+        networks:
+            - network
+
 networks:
-    sail:
+    network:
         driver: bridge
+
 volumes:
-    sail-mysql:
-        driver: local
+    db-primary-data:
+    db-primary-config:
+    db-secondary-1-data:
+    db-secondary-1-config:
+    db-secondary-2-data:
+    db-secondary-2-config:
