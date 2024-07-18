@@ -1,17 +1,73 @@
 services:
-    laravel.api:
+    laravel.api-1:
         build:
             context: ./docker/8.3
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        container_name: laravel.api
+        container_name: laravel.api-1
         image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'
-        ports:
-            - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+        # ports:
+            # - '${APP_PORT_1:-80}:80'
+            # - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+            IGNITION_LOCAL_SITES_PATH: '${PWD}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - network
+        depends_on:
+            - db-primary
+            - db-secondary-1
+            - db-secondary-2
+
+    laravel.api-2:
+        build:
+            context: ./docker/8.3
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP}'
+        container_name: laravel.api-2
+        image: sail-8.3/app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        # ports:
+            # - '${APP_PORT_2:-80}:80'
+            # - '${VITE_PORT:-5172}:${VITE_PORT:-5173}'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+            IGNITION_LOCAL_SITES_PATH: '${PWD}'
+        volumes:
+            - '.:/var/www/html'
+        networks:
+            - network
+        depends_on:
+            - db-primary
+            - db-secondary-1
+            - db-secondary-2
+
+    laravel.api-3:
+        build:
+            context: ./docker/8.3
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP}'
+        container_name: laravel.api-3
+        image: sail-8.3/app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        # ports:
+            # - '${APP_PORT_3:-80}:80'
+            # - '${VITE_PORT:-5175}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -94,6 +150,21 @@ services:
         volumes:
             - "db-secondary-2-data:/data/db"
             - "db-secondary-2-config:/data/configdb"
+        networks:
+            - network
+
+     # Balanceador de carga
+    loadbalancer:
+        image: nginx:latest
+        container_name: loadbalancer
+        ports:
+            - '${APP_PORT}:80'
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+        depends_on:
+            - laravel.api-1
+            - laravel.api-2
+            - laravel.api-3
         networks:
             - network
 
