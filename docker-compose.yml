@@ -1,11 +1,11 @@
 services:
-    api:
+    laravel.api:
         build:
             context: ./docker/8.3
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        container_name: app
+        container_name: laravel.api
         image: sail-8.3/app
         extra_hosts:
             - 'host.docker.internal:host-gateway'

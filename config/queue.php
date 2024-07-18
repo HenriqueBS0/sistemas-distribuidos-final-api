@@ -35,13 +35,24 @@ return [
         ],
 
         'database' => [
-            'driver' => 'database',
-            'connection' => env('DB_QUEUE_CONNECTION'),
-            'table' => env('DB_QUEUE_TABLE', 'jobs'),
-            'queue' => env('DB_QUEUE', 'default'),
-            'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
-            'after_commit' => false,
+            'driver' => 'mongodb',
+            // You can also specify your jobs-specific database
+            // in the config/database.php file
+            'connection' => 'mongodb',
+            'collection' => 'jobs',
+            'queue' => 'default',
+            // Optional setting
+            // 'retry_after' => 60,
         ],
+
+        // 'database' => [
+        //     'driver' => 'database',
+        //     'connection' => env('DB_QUEUE_CONNECTION'),
+        //     'table' => env('DB_QUEUE_TABLE', 'jobs'),
+        //     'queue' => env('DB_QUEUE', 'default'),
+        //     'retry_after' => (int) env('DB_QUEUE_RETRY_AFTER', 90),
+        //     'after_commit' => false,
+        // ],
 
         'beanstalkd' => [
             'driver' => 'beanstalkd',
@@ -85,9 +96,15 @@ return [
     |
     */
 
+    // 'batching' => [
+    //     'database' => env('DB_CONNECTION', 'sqlite'),
+    //     'table' => 'job_batches',
+    // ],
+
     'batching' => [
-        'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'job_batches',
+        'driver' => 'mongodb',
+        'database' => 'mongodb',
+        'collection' => 'job_batches',
     ],
 
     /*
@@ -103,10 +120,16 @@ return [
     |
     */
 
+    // 'failed' => [
+    //     'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
+    //     'database' => env('DB_CONNECTION', 'sqlite'),
+    //     'table' => 'failed_jobs',
+    // ],
+
     'failed' => [
-        'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'sqlite'),
-        'table' => 'failed_jobs',
+        'driver' => 'mongodb',
+        'database' => 'mongodb',
+        'collection' => 'failed_jobs',
     ],
 
 ];

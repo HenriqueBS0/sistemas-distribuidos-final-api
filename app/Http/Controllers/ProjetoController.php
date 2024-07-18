@@ -63,7 +63,7 @@ class ProjetoController extends Controller
                 'required', 
                 'string', 
                 'max:75', 
-                Rule::unique('projetos')->where('user_id', $request->user()->id)->ignore($projeto->id)
+                Rule::unique('projetos')->where('user_id', $request->user()->id)->ignore($projeto->id, '_id')
             ],
             'descricao' => ['required', 'string']
         ]);

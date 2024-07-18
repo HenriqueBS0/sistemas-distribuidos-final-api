@@ -73,7 +73,7 @@ class TarefaController extends Controller
                 'required', 
                 'string', 
                 'max:75', 
-                Rule::unique('tarefas')->where('projeto_id', $projeto->id)->ignore($tarefa->id)
+                Rule::unique('tarefas')->where('projeto_id', $projeto->id)->ignore($tarefa->id, '_id')
             ],
             'descricao'  => ['required', 'string'],
             'estado'     => ['in:criada,iniciada,concluida'],
